@@ -1,0 +1,25 @@
+{
+  "port": 47900,
+  "figcraft_exe": "",
+  "depth": 30,
+  "hotkeys": {
+    "to_axure": "ctrl+alt+c",
+    "to_figcraft": "ctrl+alt+v"
+  },
+  "bridges": {
+    "to_axure": {
+      "enabled": false,
+      "paused": false
+    },
+    "to_figcraft": {
+      "enabled": false,
+      "paused": false
+    }
+  },
+  "autostart": false,
+  "close_to_tray": true,
+  "window": {
+    "x": 2005,
+    "y": 454
+  }
+}

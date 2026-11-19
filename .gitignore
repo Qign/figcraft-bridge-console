@@ -1,0 +1,24 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+
+# ---------- 运行时产物 ----------
+logs/
+work/
+_work/
+*.log
+
+# ---------- PyInstaller 打包中间目录 ----------
+_build/
+build/
+dist/
+*.spec
+
+# ---------- 编辑器 / 系统 ----------
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
