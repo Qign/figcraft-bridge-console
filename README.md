@@ -29,7 +29,7 @@ figcraft-bridge-console/        ← 仓库根（本机开发目录为 D:\AI\FigC
 └─ README.md
 ```
 
-> 最终程序 `FigCraft桥控制台.exe`（PyInstaller onefile，约 10.4 MB）**不入库**，随版本发布到 [GitHub Releases](https://github.com/Qign/figcraft-bridge-console/releases)，从那里下载即可。仓库只保留源码，避免二进制文件把版本历史撑大。
+> 最终程序（本地打包为 `FigCraft桥控制台.exe`，约 10.4 MB）**不入库**，随版本发布到 [GitHub Releases](https://github.com/Qign/figcraft-bridge-console/releases)，附件名为 `FigCraft.exe`（同一份文件，用英文名是为了避免中文名在部分环境下下载/解压异常）。仓库只保留源码，避免二进制文件把版本历史撑大。
 
 ### 三个组件定位
 
@@ -69,7 +69,7 @@ figcraft-bridge-console/        ← 仓库根（本机开发目录为 D:\AI\FigC
 
 ### 3.1 直接使用（免 Python）
 
-从 [Releases](https://github.com/Qign/figcraft-bridge-console/releases) 下载 `FigCraft桥控制台.exe`，放到任意目录（绿色免安装）。首次运行会在 exe 同目录生成 `config.json` 与 `logs/`。
+从 [Releases](https://github.com/Qign/figcraft-bridge-console/releases) 下载 `FigCraft.exe`，放到任意目录（绿色免安装）。首次运行会在 exe 同目录生成 `config.json` 与 `logs/`。
 
 FigCraft 必须以控制端口方式启动（桥要通过 `--control 47900` 读取/写入实时文档）：
 
@@ -156,11 +156,12 @@ cd figcraft-bridge-console
 
 1. 运行 `src\build.bat` 打出新的 `FigCraft桥控制台.exe`；
 2. 提交源码变更并打标签：`git tag v1.0.1` 然后 `git push origin v1.0.1`；
-3. 在 GitHub 仓库页面 **Releases → Draft a new release**，选择该标签，把 exe 拖进附件区后发布；
+3. 在 GitHub 仓库页面 **Releases → Draft a new release**，选择该标签，把 exe 拖进附件区后发布（附件名建议改成 `FigCraft.exe`，与既有版本保持一致）；
 4. 或者用命令行一步到位（需本机装好并登录 `gh`）：
 
    ```bat
-   gh release create v1.0.1 "FigCraft桥控制台.exe" --title "v1.0.1" --notes "更新说明"
+   copy "FigCraft桥控制台.exe" FigCraft.exe
+   gh release create v1.0.1 "FigCraft.exe" --title "v1.0.1" --notes "更新说明"
    ```
 
 旧版独立桥的用法细节见各自目录下的 `使用说明.md`。
