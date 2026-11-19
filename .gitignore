@@ -16,6 +16,10 @@ build/
 dist/
 *.spec
 
+# ---------- 发布产物（exe 走 GitHub Releases，不入库） ----------
+*.exe
+*.zip
+
 # ---------- 编辑器 / 系统 ----------
 .idea/
 .vscode/

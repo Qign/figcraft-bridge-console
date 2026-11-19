@@ -12,7 +12,6 @@
 
 ```
 figcraft-bridge-console/        ← 仓库根（本机开发目录为 D:\AI\FigCraft\BridgeTool）
-├─ FigCraft桥控制台.exe          ← 最终程序（PyInstaller onefile 绿色单文件，10.4 MB）
 ├─ 启动控制台.bat                ← 开发/脚本版启动器（pythonw 启动 src/app.py）
 ├─ config.json                  ← 运行时配置（端口、热键、桥开关、窗口位置）
 ├─ src/                         ← 统一控制台源码
@@ -30,11 +29,13 @@ figcraft-bridge-console/        ← 仓库根（本机开发目录为 D:\AI\FigC
 └─ README.md
 ```
 
+> 最终程序 `FigCraft桥控制台.exe`（PyInstaller onefile，约 10.4 MB）**不入库**，随版本发布到 [GitHub Releases](https://github.com/Qign/figcraft-bridge-console/releases)，从那里下载即可。仓库只保留源码，避免二进制文件把版本历史撑大。
+
 ### 三个组件定位
 
 | 组件 | 定位 | 方向 | 形态 | 状态 |
 |---|---|---|---|---|
-| `src/` + 顶层 exe | **统一双向桥控制台** | FigCraft ⇄ Axure 双向 | 单文件 exe + 托盘 + 面板 | 当前主线，推荐使用 |
+| `src/`（打包产物见 Releases） | **统一双向桥控制台** | FigCraft ⇄ Axure 双向 | 单文件 exe + 托盘 + 面板 | 当前主线，推荐使用 |
 | `axure桥/` | **旧版独立桥**（FigCraft → Axure） | 单向 F→A | 常驻脚本 + 全局热键，无窗口 | 归档，仅作参考 |
 | `axvg桥/` | **旧版独立桥**（Axure → FigCraft） | 单向 A→F | 常驻脚本 + 全局热键，无窗口 | 归档，仅作参考 |
 
@@ -68,7 +69,7 @@ figcraft-bridge-console/        ← 仓库根（本机开发目录为 D:\AI\FigC
 
 ### 3.1 直接使用（免 Python）
 
-双击 `FigCraft桥控制台.exe`。首次运行会在 exe 同目录生成 `config.json` 与 `logs/`。
+从 [Releases](https://github.com/Qign/figcraft-bridge-console/releases) 下载 `FigCraft桥控制台.exe`，放到任意目录（绿色免安装）。首次运行会在 exe 同目录生成 `config.json` 与 `logs/`。
 
 FigCraft 必须以控制端口方式启动（桥要通过 `--control 47900` 读取/写入实时文档）：
 
@@ -146,7 +147,20 @@ cd figcraft-bridge-console
 
 1. 安装 Python 3.9+，确认 `python` / `pythonw` 在 PATH 中；
 2. 按需修改 `src/` 下源码，用 `启动控制台.bat` 或 `python src\app.py` 调试；
-3. 需要新的绿色版时，先删掉旧的 `FigCraft桥控制台.exe`，再运行 `src\build.bat`；
-4. 提交前确认 `logs/`、`__pycache__/`、`_build/` 没有被纳入版本控制。
+3. 需要新的绿色版时，运行 `src\build.bat` 打包（产物落在仓库根，已被 `.gitignore` 排除）；
+4. 提交前确认 `logs/`、`__pycache__/`、`_build/`、`*.exe` 没有被纳入版本控制。
+
+### 发布新版本（exe 走 Releases）
+
+仓库只存源码，二进制通过 GitHub Releases 分发：
+
+1. 运行 `src\build.bat` 打出新的 `FigCraft桥控制台.exe`；
+2. 提交源码变更并打标签：`git tag v1.0.1` 然后 `git push origin v1.0.1`；
+3. 在 GitHub 仓库页面 **Releases → Draft a new release**，选择该标签，把 exe 拖进附件区后发布；
+4. 或者用命令行一步到位（需本机装好并登录 `gh`）：
+
+   ```bat
+   gh release create v1.0.1 "FigCraft桥控制台.exe" --title "v1.0.1" --notes "更新说明"
+   ```
 
 旧版独立桥的用法细节见各自目录下的 `使用说明.md`。
