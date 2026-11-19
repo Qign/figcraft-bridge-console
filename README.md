@@ -11,7 +11,7 @@
 ## 一、仓库结构
 
 ```
-BridgeTool/                     ← 仓库根
+figcraft-bridge-console/        ← 仓库根（本机开发目录为 D:\AI\FigCraft\BridgeTool）
 ├─ FigCraft桥控制台.exe          ← 最终程序（PyInstaller onefile 绿色单文件，10.4 MB）
 ├─ 启动控制台.bat                ← 开发/脚本版启动器（pythonw 启动 src/app.py）
 ├─ config.json                  ← 运行时配置（端口、热键、桥开关、窗口位置）
