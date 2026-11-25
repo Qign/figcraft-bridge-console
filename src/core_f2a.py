@@ -152,9 +152,59 @@ def base_item(tpl, node, absm, w, h):
     return it
 
 
+# --- 样式规格（对齐用户样本：适应文本 / 居中按钮） ---
+BUTTON_PADDING = [2.0, 2.0, 2.0, 2.0]   # 居中按钮：内边距 2
+ADAPT_PADDING = [0.0, 0.0, 0.0, 0.0]    # 适应文本：无内边距
+BUTTON_TEXT_ALIGN = 1                    # 垂直居中
+ADAPT_TEXT_ALIGN = 0                     # 适应文本：顶端对齐
+CJK_RATIO = 1.0      # 中文等全角字符宽度 ≈ 1.0 × 字号
+ASCII_RATIO = 0.55   # ASCII 字符宽度 ≈ 0.55 × 字号
+SPACE_RATIO = 0.3    # 空格宽度 ≈ 0.3 × 字号
+
+
+def line_spacing(fs):
+    """行距 = 字号 × 1.15 取整，样本 13px → 15.0。"""
+    return float(round(float(fs) * 1.15))
+
+
+def char_width(ch, fs):
+    if ch in (" ", "\t"):
+        return SPACE_RATIO * fs
+    try:
+        code = ord(ch)
+    except TypeError:
+        return CJK_RATIO * fs
+    if code < 128:
+        return ASCII_RATIO * fs
+    return CJK_RATIO * fs
+
+
+def measure_line(text, fs):
+    return sum(char_width(ch, fs) for ch in (text or ""))
+
+
+def fit_text_size(characters, fs):
+    """适应文本尺寸：宽取最长行、高取 行数 × 行距。"""
+    fs = float(fs or 13)
+    lines = str(characters if characters is not None else "").split("\n")
+    if not lines:
+        lines = [""]
+    w = max(measure_line(l, fs) for l in lines)
+    h = line_spacing(fs) * len(lines)
+    return round(max(w, 1.0), 2), round(max(h, 1.0), 2)
+
+
+def button_text_color(node):
+    """图形自带文字的颜色：优先取 FigCraft 文本色，缺失时用深灰。"""
+    tc = node.get("text_color")
+    if isinstance(tc, dict) and float(tc.get("a", 0) or 0) > 0:
+        return tc
+    return {"r": 0.2, "g": 0.2, "b": 0.2, "a": 1.0}
+
+
 def build_text(characters, st, fill_color, align_h, ls_map):
     fs = float(st.get("font_size") or 13)
-    ls = ls_map.get(fs) or round(fs * 0.75, 2)
+    ls = ls_map.get(fs) or line_spacing(fs)
     bold = "bold" in str(st.get("font_style", "")).lower()
     paras = []
     for seg in (characters or "").split("\n"):
@@ -187,15 +237,24 @@ class Converter(object):
         for p in self.empty_text["paragraphs"]:
             for il in p["inlines"]:
                 il["text"] = ""
+            p["horizontalAlignment"] = 1  # 居中按钮：空模板水平居中
         self.nodes = nodes
         self.ls_map = {}
         self.warnings = []
 
     # --- 图元 ---
+    def button_text(self, node):
+        """居中按钮文字：图形自带文字则写入并居中，否则用居中空模板。"""
+        chars = node.get("characters")
+        if chars is None or not str(chars).strip():
+            return json.loads(json.dumps(self.empty_text))
+        return build_text(str(chars), node.get("style") or {},
+                          button_text_color(node), 1, self.ls_map)
     def conv_text(self, node, absm):
-        w, h = node.get("width", 0), node.get("height", 0)
-        it = base_item(self.txt_tpl, node, absm, w, h)
         st = node.get("style") or {}
+        # 适应文本：宽高按文字内容自适应（宽=最长行，高=行数×行距）
+        w, h = fit_text_size(node.get("characters"), st.get("font_size") or 13)
+        it = base_item(self.txt_tpl, node, absm, w, h)
         fill = solid_fill(node.get("fills"))
         tc = fill["color"] if fill["color"]["a"] > 0 else {"r": 0.2, "g": 0.2, "b": 0.2, "a": 1.0}
         al = node.get("align_h")
@@ -207,7 +266,7 @@ class Converter(object):
             "strokes": [json.loads(json.dumps(DEFAULT_STROKE))],
             "strokePattern": [], "strokeThickness": 0.0,
             "text": build_text(node.get("characters"), st, tc, ha, self.ls_map),
-            "textAlignment": ha, "textPadding": [0.0, 0.0, 0.0, 0.0],
+            "textAlignment": ADAPT_TEXT_ALIGN, "textPadding": list(ADAPT_PADDING),
             "textRotation": 0.0, "meta": None,
             "effects": json.loads(json.dumps(self.shp_tpl.get("effects") or [])),
             "textShadows": json.loads(json.dumps(self.shp_tpl.get("textShadows") or [])),
@@ -247,8 +306,8 @@ class Converter(object):
             "corners": corners,
             "border": [thick, thick, thick, thick] if thick > 0 else [0.0, 0.0, 0.0, 0.0],
             "isNameDynamic": False,
-            "text": json.loads(json.dumps(self.empty_text)),
-            "textAlignment": 0, "textPadding": [0.0, 0.0, 0.0, 0.0],
+            "text": self.button_text(node),
+            "textAlignment": BUTTON_TEXT_ALIGN, "textPadding": list(BUTTON_PADDING),
             "textRotation": 0.0, "meta": None,
             "effects": json.loads(json.dumps(self.shp_tpl.get("effects") or [])),
             "textShadows": json.loads(json.dumps(self.shp_tpl.get("textShadows") or [])),
@@ -273,8 +332,8 @@ class Converter(object):
             "paths": [{"startDecoration": 1, "endDecoration": 1, "closed": True,
                        "data": rrect_points(w, h, radii)}],
             "svgPaths": None,
-            "text": json.loads(json.dumps(self.empty_text)),
-            "textAlignment": 0, "textPadding": [0.0, 0.0, 0.0, 0.0],
+            "text": self.button_text(node),
+            "textAlignment": BUTTON_TEXT_ALIGN, "textPadding": list(BUTTON_PADDING),
             "textRotation": 0.0, "meta": None,
             "effects": json.loads(json.dumps(self.shp_tpl.get("effects") or [])),
             "textShadows": json.loads(json.dumps(self.shp_tpl.get("textShadows") or [])),
@@ -462,6 +521,8 @@ def adapt_tree(nodes, ox, oy, out=None, parent=None):
             "stroke": {"weight": float(node.get("strokeWeight") or 0)},
             "corners": {"radii": radii_of(node.get("cornerRadius"))},
             "characters": node.get("characters"),
+            "text_color": (hex_to_rgba(node.get("textColor"), 1.0)
+                           if isinstance(node.get("textColor"), str) else None),
             "align_h": str(node.get("textAlign") or "left").lower(),
             "style": {
                 "font_size": node.get("fontSize"),

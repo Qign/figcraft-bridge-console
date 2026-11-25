@@ -1,6 +1,6 @@
 {
   "port": 47900,
-  "figcraft_exe": "",
+  "figcraft_exe": "D:\\Program Files\\ArtCraft\\FigCraft\\figcraft.exe",
   "depth": 30,
   "hotkeys": {
     "to_axure": "ctrl+alt+c",
@@ -8,7 +8,7 @@
   },
   "bridges": {
     "to_axure": {
-      "enabled": false,
+      "enabled": true,
       "paused": false
     },
     "to_figcraft": {
@@ -19,7 +19,7 @@
   "autostart": false,
   "close_to_tray": true,
   "window": {
-    "x": 2005,
-    "y": 454
+    "x": 597,
+    "y": 266
   }
 }

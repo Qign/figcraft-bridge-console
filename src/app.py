@@ -727,27 +727,117 @@ class App(object):
         except Exception as exc:
             self.set_msg("启动 FigCraft 失败：%s" % exc, C_ERR)
 
+    @staticmethod
+    def _reg_figcraft_candidates():
+        """从注册表卸载项反查 FigCraft 安装目录（InstallLocation / DisplayIcon）。"""
+        out = []
+        try:
+            import winreg
+        except Exception:
+            return out
+        roots = []
+        for hive_name in ("HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"):
+            hive = getattr(winreg, hive_name, None)
+            if hive is None:
+                continue
+            for sub in (r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                        r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"):
+                roots.append((hive, sub))
+        for hive, path in roots:
+            try:
+                key = winreg.OpenKey(hive, path)
+            except OSError:
+                continue
+            try:
+                total = winreg.QueryInfoKey(key)[0]
+            except OSError:
+                total = 0
+            for i in range(total):
+                try:
+                    sk = winreg.OpenKey(key, winreg.EnumKey(key, i))
+                except OSError:
+                    continue
+                try:
+                    try:
+                        name = str(winreg.QueryValueEx(sk, "DisplayName")[0] or "")
+                    except OSError:
+                        name = ""
+                    if "figcraft" not in name.lower():
+                        continue
+                    try:
+                        loc = str(winreg.QueryValueEx(sk, "InstallLocation")[0] or "")
+                        if loc:
+                            out.append(os.path.join(loc.strip('" '), "figcraft.exe"))
+                    except OSError:
+                        pass
+                    try:
+                        icon = str(winreg.QueryValueEx(sk, "DisplayIcon")[0] or "")
+                        icon = icon.split(",")[0].strip('" ')
+                        if icon.lower().endswith(".exe"):
+                            out.append(icon)
+                    except OSError:
+                        pass
+                finally:
+                    try:
+                        winreg.CloseKey(sk)
+                    except OSError:
+                        pass
+            try:
+                winreg.CloseKey(key)
+            except OSError:
+                pass
+        return out
+
     def find_figcraft_exe(self):
         p = (self.cfg.get("figcraft_exe") or "").strip('" ')
-        if p and os.path.isfile(p):
+        # 更新助手残留副本即使被写进配置也不直接采用，继续走自动探测
+        if p and os.path.isfile(p) and "launcher-update-helper" not in p.lower():
             return p
         candidates = []
+        # 1) 注册表登记的安装位置优先（保证拿到正式安装版本）
+        candidates.extend(self._reg_figcraft_candidates())
+        # 2) 历史可执行路径
         if self.fc_path:
             candidates.append(self.fc_path)
+        # 3) 常见安装根目录（含两层子目录扫描，覆盖自定义安装盘）
         local = os.environ.get("LOCALAPPDATA", "")
-        for base in (r"D:\AI\FigCraft", os.path.join(local, "Programs"), r"C:\Program Files",
-                     os.path.join(local, "FigCraft")):
-            if base and os.path.isdir(base):
-                candidates.append(os.path.join(base, "figcraft.exe"))
-                try:
-                    for name in os.listdir(base):
-                        candidates.append(os.path.join(base, name, "figcraft.exe"))
-                except OSError:
-                    pass
+        roots = [
+            os.environ.get("ProgramFiles"),
+            os.environ.get("ProgramFiles(x86)"),
+            os.environ.get("ProgramW6432"),
+            r"D:\Program Files", r"D:\Program Files (x86)", r"C:\Program Files",
+            r"C:\Program Files (x86)", r"D:\AI\FigCraft",
+            os.path.join(local, "Programs"),
+        ]
+        seen = set()
+        for base in roots:
+            if not base or not os.path.isdir(base) or base.lower() in seen:
+                continue
+            seen.add(base.lower())
+            candidates.append(os.path.join(base, "figcraft.exe"))
+            try:
+                for d1 in sorted(os.listdir(base)):
+                    p1 = os.path.join(base, d1)
+                    if not os.path.isdir(p1):
+                        continue
+                    candidates.append(os.path.join(p1, "figcraft.exe"))
+                    try:
+                        for d2 in sorted(os.listdir(p1)):
+                            candidates.append(os.path.join(p1, d2, "figcraft.exe"))
+                    except OSError:
+                        pass
+            except OSError:
+                pass
+        # 4) 兜底：更新助手副本仅作最后备选
+        fallback = []
         for c in candidates:
-            if os.path.isfile(c):
-                return c
-        return ""
+            if not os.path.isfile(c):
+                continue
+            if "launcher-update-helper" in c.lower():
+                fallback.append(c)
+                continue
+            return c
+        return fallback[0] if fallback else ""
 
     # ---------- 转换 ----------
     def on_hotkey(self, hid):

@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-ui_panel —— 760x524 控制面板（Tkinter Canvas 绘制，无第三方依赖）
+ui_panel —— 760x544 控制面板（Tkinter Canvas 绘制，无第三方依赖）
 
 设计依据：D:\\AI\\FigCraft\\面板设计\\桥控制面板_v1.png + 界面设计说明_v1.md
 布局（逻辑像素，S 为 DPI 缩放）：
     0..64    标题栏（白）：logo + 标题/副标题 + 设置 + 关闭
     64..112  环境状态条（白）：状态点 + 端口/进程/热键 + 重新检测
-    124..250 卡片1 FigCraft -> Axure
-    256..382 卡片2 Axure -> FigCraft
-    392..428 底部操作行：全部启用 / 全部停用 / 查看日志 / 开机自启
-    440      最近一次动作提示
-    478      底部说明
+    124..254 卡片1 FigCraft -> Axure
+    278..408 卡片2 Axure -> FigCraft
+    414..450 底部操作行：全部启用 / 全部停用 / 查看日志 / 开机自启
+    460      最近一次动作提示
+    498      底部说明
 """
 import math
 import os
 import tkinter as tk
 import tkinter.font as tkfont
 
-W, H = 760, 524
+W, H = 760, 544
 
 C_BG = "#F5F6F8"
 C_WHITE = "#FFFFFF"
@@ -176,12 +176,12 @@ class Panel(tk.Tk):
         self._card("to_axure", 124, "FigCraft → Axure 桥",
                    "在 FigCraft 选中画板 → 按转换热键 → 切到 Axure 画布 Ctrl+V",
                    st.get("hotkeys", {}).get("to_axure", "Ctrl+Alt+C"))
-        self._card("to_figcraft", 256, "Axure → FigCraft 桥",
+        self._card("to_figcraft", 266, "Axure → FigCraft 桥",
                    "在 Axure 复制元件 → 按转换热键 → 直接落入当前 FigCraft 文件",
                    st.get("hotkeys", {}).get("to_figcraft", "Ctrl+Alt+V"))
 
         # ---- 底部操作行 ----
-        y = 392
+        y = 416
         self._button("all_on", 24, y, 96, 36, "全部启用", "primary", 13)
         self._button("all_off", 132, y, 96, 36,
                      "全部停用", "secondary", 13,
@@ -202,11 +202,11 @@ class Panel(tk.Tk):
             msg = st.get("busy_msg") or "正在转换…"
         if msg:
             color = st.get("last_level") or C_SUB
-            self.txt(24, 446, msg, 12, color)
+            self.txt(24, 466, msg, 12, color)
         else:
-            self.txt(24, 446, "就绪：两个热键在任意窗口下均可用", 12, C_MUTED)
+            self.txt(24, 466, "就绪：两个热键在任意窗口下均可用", 12, C_MUTED)
 
-        self.txt(W / 2, 486, "桥在后台静默运行，关闭面板不影响热键；日志见 logs 目录",
+        self.txt(W / 2, 506, "桥在后台静默运行，关闭面板不影响热键；日志见 logs 目录",
                  11, C_MUTED, anchor="center")
 
         cv.create_rectangle(self.px(0), self.px(0), self.px(W) - 1, self.px(H) - 1,
@@ -268,7 +268,7 @@ class Panel(tk.Tk):
     def _card(self, bridge, top, title, desc, hotkey):
         st = self.st
         x0, x1 = 24, W - 24
-        self.rr(x0, top, x1, top + 126, 12, C_WHITE)
+        self.rr(x0, top, x1, top + 130, 12, C_WHITE)
         self.txt(x0 + 20, top + 26, title, 15, C_TEXT, bold=True)
 
         state = st.get("bridges", {}).get(bridge, "running")
@@ -283,17 +283,17 @@ class Panel(tk.Tk):
         self.dot(bx1 - bw + 11, top + 26, 3, fg)
         self.txt(bx1 - bw + 18, top + 26, label, 12, fg, anchor="w")
 
-        self.txt(x0 + 20, top + 56, desc, 12.5, C_SUB)
+        self.txt(x0 + 20, top + 52, desc, 12.5, C_SUB)
 
         # 热键行
-        hy = top + 84
+        hy = top + 76
         self.txt(x0 + 20, hy, "转换热键", 12, C_MUTED, anchor="w")
         kw = max(126, self.measure(hotkey, 12) + 28)
         self.rr(x0 + 84, hy - 14, x0 + 84 + kw, hy + 14, 6, "#F7F8FA", "#E5E8EC")
         self.txt(x0 + 84 + kw / 2, hy, hotkey, 12, C_TEXT, anchor="center")
 
         # 右侧两块按钮
-        bw2, bh2 = 72, 30
+        bw2, bh2 = 72, 28
         bx = x1 - 20 - bw2
         disable_label = "启用" if state == "disabled" else "停用"
         self._button("%s_disable" % bridge, bx, hy - bh2 / 2, bw2, bh2, disable_label,
@@ -313,7 +313,7 @@ class Panel(tk.Tk):
         if hint:
             self.txt(x0 + 20, top + 108, hint, 11, hint_color)
         if port_down and state != "disabled":
-            self._button("%s_launch" % bridge, x1 - 20 - 118, top + 96, 118, 24,
+            self._button("%s_launch" % bridge, x1 - 20 - 118, top + 98, 118, 24,
                          "启动 FigCraft", "ghost", 11)
 
     # ---------------- 事件 ----------------
